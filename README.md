@@ -4,10 +4,10 @@
   </a>
 </p>
 
-<h1 align="center">Overblood-xport</h1>
+<h1 align="center">OverBlood-xport</h1>
 
 <p align="center">
-  Overblood (PSX) decompilation port via Codex
+  OverBlood (PSX) decompilation port via Codex
 </p>
 
 <p align="center">
@@ -18,8 +18,8 @@
 
 | Stage | Progress |
 | ---: | :---: |
-| **decomp:** | [![Decompilation progress](https://psxports.pages.dev/progress?repo=Overblood-xport&label=decomp)](https://github.com/psxports/Overblood-xport/issues?q=is%3Aissue%20label%3Adecomp) |
-| **refactor:** | [![Refactoring progress](https://psxports.pages.dev/progress?repo=Overblood-xport&label=refactor)](https://github.com/psxports/Overblood-xport/issues?q=is%3Aissue%20label%3Arefactor) |
-| **enhance:** | [![Enhancement progress](https://psxports.pages.dev/progress?repo=Overblood-xport&label=enhance)](https://github.com/psxports/Overblood-xport/issues?q=is%3Aissue%20label%3Aenhance) |
-| **remaster:** | [![Remaster progress](https://psxports.pages.dev/progress?repo=Overblood-xport&label=remaster)](https://github.com/psxports/Overblood-xport/issues?q=is%3Aissue%20label%3Aremaster) |
+| **decomp:** | [![Decompilation progress](https://psxports.pages.dev/progress?repo=OverBlood-xport&label=decomp)](https://github.com/psxports/OverBlood-xport/issues?q=is%3Aissue%20label%3Adecomp) |
+| **refactor:** | [![Refactoring progress](https://psxports.pages.dev/progress?repo=OverBlood-xport&label=refactor)](https://github.com/psxports/OverBlood-xport/issues?q=is%3Aissue%20label%3Arefactor) |
+| **enhance:** | [![Enhancement progress](https://psxports.pages.dev/progress?repo=OverBlood-xport&label=enhance)](https://github.com/psxports/OverBlood-xport/issues?q=is%3Aissue%20label%3Aenhance) |
+| **remaster:** | [![Remaster progress](https://psxports.pages.dev/progress?repo=OverBlood-xport&label=remaster)](https://github.com/psxports/OverBlood-xport/issues?q=is%3Aissue%20label%3Aremaster) |
 
