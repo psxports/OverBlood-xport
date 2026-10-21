@@ -1,15 +1,36 @@
-#include "xport.h"
+#include "functions.h"
 
-/* Unresolved until the original PsyQ graph type storage is audited */
-const uint32 xport_gpu_graph_type_address = 0u;
-
-/* Unresolved CD bindings until original storage is audited */
-const uint32 xport_cd_sync_callback_address = 0u;
-const uint32 xport_cd_ready_callback_address = 0u;
-const uint32 xport_cd_status_address = 0u;
-const uint32 xport_cd_setloc_table_address = 0u;
+/* Zero selects the existing native standard GPU owner */
+const uint32 xport_gpu_graph_type_address = 0;
 
 void xport_main(void)
 {
-    return;
+    const PSX_EXE executable = {"DATA/SLUS_004.64", 0x80010000, 0x800CFC60, 0x800F035C, 0x800CEDA0, 0x800F035C, 0xFFC9C};
+    uint32 heap_size;
+    if (!xport_psx_exe_load(&executable))
+    {
+#ifndef NDEBUG
+        fprintf(stderr, "OBL: Cannot load initial data from DATA/SLUS_004.64\n");
+#endif
+        abort();
+    }
+    heap_size = (r_u32(0x800CF798) - 8 - r_u32(0x800CF79C)) - 0xF035C;
+    w_u32(0x800CEDA4, heap_size);
+    psx_bios_init_user_heap(0x800F0360, heap_size);
+    if (!mount_resource_source())
+    {
+#ifndef NDEBUG
+        fprintf(stderr, "OBL: Cannot mount extracted resources from DATA\n");
+#endif
+        abort();
+    }
+    if (!bind_krom_font())
+    {
+#ifndef NDEBUG
+        fprintf(stderr, "OBL: Cannot load font resource DATA/KROM15.BIN\n");
+#endif
+        abort();
+    }
+    bind_sequence_runtime();
+    func_80012698();
 }
