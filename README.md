@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <!-- <a href="https://psxports.to/OBL/"><strong>Play Game</strong></a> -->
+  <a href="https://psxports.to/OB/"><strong>Play Game</strong></a>
 </p>
 
 ## Project Status

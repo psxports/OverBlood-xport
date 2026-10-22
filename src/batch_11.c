@@ -225,6 +225,7 @@ void func_8006bed8(void)
 {
     FUNCTION_MARKER(0x8006BED8, "SLUS_004.64");
     EnterCriticalSectionPSX();
+    StUnSetRing();
     CdDataCallback(NULL);
     CdReadyCallback(NULL);
     ExitCriticalSection();

@@ -1275,6 +1275,15 @@ uint32 func_80038854(void)
 
 uint32 func_800385f8(uint32 word0, uint32 word1, uint32 word2, uint32 word3, uint32 word4, uint32 word5, uint32 enabled, uint32 channel, uint32 duration, uint32 loop, uint32 left, uint32 right, uint32 callback)
 {
+#ifdef AP_WEB
+    /* Only looping background STR tracks are packaged for Web */
+    if (loop == 0)
+    {
+        w_u32(0x800CF95C, 0);
+        w_u32(0x800CF8B4, 0);
+        return 0;
+    }
+#endif
     CdlLOC location;
     uint8 packed[3], result[8], mode[8], filter[2];
     uint32 start;

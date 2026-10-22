@@ -1,5 +1,9 @@
 #include "functions.h"
 
+#ifdef AP_WEB
+#include <strings.h>
+#endif
+
 typedef struct RESOURCE
 {
     const char *path;
@@ -29,7 +33,11 @@ static const RESOURCE *resource_by_name(const char *name)
     }
     key[length] = 0;
     for (index = 0; index < sizeof(resources) / sizeof(resources[0]); ++index)
+#ifdef AP_WEB
+        if (strncasecmp(key, resources[index].path, sizeof(key)) == 0)
+#else
         if (_strnicmp(key, resources[index].path, sizeof(key)) == 0)
+#endif
             return &resources[index];
     return NULL;
 }
@@ -88,7 +96,7 @@ static sint32 read_resource_sector(void *context, uint32 sector, uint8 buffer[23
     bytes = resource->sector_bytes == 2352 ? 2352 : resource->bytes - relative * 2048;
     if (bytes > resource->sector_bytes)
         bytes = resource->sector_bytes;
-    if (fread(output, 1, bytes, source->file) != bytes)
+    if (xport_fread(output, 1, bytes, source->file) != bytes)
         return 0;
     if (bytes < resource->sector_bytes)
         memset(output + bytes, 0, resource->sector_bytes - bytes);
@@ -118,10 +126,17 @@ CdlFILE *find_extracted_resource(CdlFILE *result, const char *filename)
 {
     const RESOURCE *resource = resource_by_name(filename);
     const char *basename;
+#ifndef AP_WEB
     FILE *file;
-    if (resource == NULL || (file = open_resource(resource->path)) == NULL)
+#endif
+    if (resource == NULL)
+        return NULL;
+#ifndef AP_WEB
+    file = open_resource(resource->path);
+    if (file == NULL)
         return NULL;
     fclose(file);
+#endif
     memset(result, 0, sizeof(*result));
     CdIntToPos((sint32)resource->first_sector, &result->pos);
     result->size = resource->bytes;
@@ -171,7 +186,7 @@ sint32 read_resource_blocks(uint32 location, void *destination, uint32 count)
         bytes = resource->bytes - relative * 2048;
         if (bytes > 2048)
             bytes = 2048;
-        if (fread(output + index * 2048, 1, bytes, file) != bytes)
+        if (xport_fread(output + index * 2048, 1, bytes, file) != bytes)
             goto finished;
         if (bytes < 2048)
             memset(output + index * 2048 + bytes, 0, 2048 - bytes);
@@ -207,7 +222,7 @@ sint32 read_resource_native(const char *filename, uint8 *destination, sint32 sou
     do
     {
         chunk = remaining > 0xFFFE ? 0xFFFE : remaining;
-        received = fread(destination, 1, chunk, file);
+        received = xport_fread(destination, 1, chunk, file);
         remaining -= (uint32)received;
         if (received == 0)
             break;

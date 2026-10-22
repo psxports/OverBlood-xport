@@ -376,7 +376,7 @@ sint32 func_80036494(const char *path, uint32 destination)
         if (fseek(file, (long)offset, SEEK_SET))
             break;
         count = remaining > 0xFFFE ? 0xFFFE : remaining;
-        received = fread(psx_addr(destination, count), 1, count, file);
+        received = xport_fread(psx_addr(destination, count), 1, count, file);
         remaining -= (uint32)received;
         if (!received)
             break;
@@ -1013,6 +1013,7 @@ uint32 func_80012658(void)
 {
     uint32 buttons;
     FUNCTION_MARKER(0x80012658, "SLUS_004.64");
+    xport_poll();
     buttons = PadRead(0);
     if (buttons == 0x900)
         func_800265ec(1);

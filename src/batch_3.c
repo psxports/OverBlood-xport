@@ -1450,6 +1450,10 @@ uint32 func_8002d430(uint32 descriptor)
 
 sint32 func_80020e78(sint32 movie, uint32 mode)
 {
+#ifdef AP_WEB
+    /* STR media is excluded from the Web package */
+    return 2;
+#else
     uint32 descriptor[16];
     uint32 base;
     uint32 offset;
@@ -1503,6 +1507,7 @@ sint32 func_80020e78(sint32 movie, uint32 mode)
     VSync(0);
     GsSwapDispBuff();
     return result;
+#endif
 }
 
 uint32 func_80026840(void)

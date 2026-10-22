@@ -1,0 +1,13 @@
+PROJECT_ROOT := $(abspath ../../..)
+SHORT_NAME := OB
+FULL_NAME := OverBlood
+CONFIG ?= Release
+WEB_PACKAGER_FLAGS := --include-str DATA/VOICEXA/BGM65.STR --include-str DATA/VOICEXA/BGM90.STR
+APP_SOURCES := $(wildcard $(PROJECT_ROOT)/src/*.c)
+APP_DEFINES := -DXPORT_NATIVE_VM=1 -DXPORT_NATIVE_CD=1 -DXPORT_NATIVE_VAB=1 -DXPORT_NATIVE_SEQUENCE=1 -DWND_TITLE='"$(FULL_NAME)"' -DWND_WIDTH=960 -DWND_HEIGHT=720 -DFIELD_RATE=60
+ifeq ($(CONFIG),Release)
+APP_DEFINES += -DXPORT_DISABLE_FUNCTION_MARKERS
+endif
+include ../../../../xport/src/platform/web/Makefile
+# Native VAB staging exceeds the default 64 KiB Web stack
+LINK_FLAGS += -g2 -sSTACK_OVERFLOW_CHECK=2 -sSTACK_SIZE=262144
