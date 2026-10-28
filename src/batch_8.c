@@ -1,4 +1,5 @@
 #include "functions.h"
+#include "xport.h"
 #include "psx_press.h"
 #include "psx_stream.h"
 #include <string.h>
@@ -1595,127 +1596,79 @@ void start_movie(uint8 *location, const uint32 *stream, void (*callback)(void))
     movie_start_core(location, 0, stream, callback);
 }
 
+typedef struct MOVIE_INPUT_CONTEXT
+{
+    uint32 mode, held, interrupted;
+} MOVIE_INPUT_CONTEXT;
+
+static sint32 movie_input_tick(void *context)
+{
+    MOVIE_INPUT_CONTEXT *input = (MOVIE_INPUT_CONTEXT *)context;
+    uint32 buttons = PadRead(1);
+    if (input->mode == 1 || input->mode == 2)
+    {
+        if ((buttons & 0x800) && (buttons & 0x20))
+            input->interrupted = 1;
+        else if (input->mode == 2 && (buttons & 0x800) && (buttons & 0x100))
+        {
+            w_u32(0x800CF8DC, 100);
+            input->interrupted = 1;
+        }
+    }
+    else if (input->mode == 0)
+    {
+        if (buttons && !input->held)
+            input->interrupted = 1;
+        else if (!buttons)
+            input->held = 0;
+    }
+    return input->interrupted ? 0 : 1;
+}
+
 sint32 func_80030b9c(uint32 *descriptor)
 {
-    PSX_RECT clear_rectangle;
-    DISPENV display;
-    CdlFILE file;
-    uint32 held, mode, selected, pixels, product, viewport, input;
-    sint32 height, width, adjusted, groups, result;
+    XportFmvPresentation presentation = {0};
+    MOVIE_INPUT_CONTEXT input = {0};
+    char path[64] = "DATA/";
+    uint32 index, character;
+    sint32 result;
     FUNCTION_MARKER(0x80030B9C, "SLUS_004.64");
+    /* Keep the original logical source identity and source-frame limit */
+    for (index = 0; index < 32; ++index)
+    {
+        character = r_u8(descriptor[0] + index);
+        if (character != '\\' && character != '/')
+            break;
+    }
+    for (character = 5; index < 32 && character < sizeof(path) - 1; ++index)
+    {
+        uint32 value = r_u8(descriptor[0] + index);
+        if (value == 0 || value == ';')
+            break;
+        path[character++] = value == '\\' ? '/' : (char)value;
+    }
+    path[character] = 0;
+    if (index == 32 || character == 5)
+        return -1;
+    presentation.width = 320;
+    presentation.height = 240;
+    presentation.video_x = (sint32)(descriptor[6] * 2 / 3);
+    presentation.video_y = (sint32)descriptor[7];
+    presentation.controllers = 1;
+    presentation.skip_buttons = PADRdown | PADstart;
+    input.mode = descriptor[15];
+    input.held = 1;
+    presentation.context = &input;
+    presentation.tick = movie_input_tick;
     w_u32(0x800CFC60, 1);
-    SetDispMask(0);
-    clear_rectangle.x = 0;
-    clear_rectangle.y = 0;
-    clear_rectangle.w = 640;
-    clear_rectangle.h = 512;
-    ClearImage(&clear_rectangle, 0, 0, 0);
-    SsSetSerialAttr(0, 0, 1);
-    SsSetSerialVol(0, 64, 64);
-    while (find_movie_resource(&file, descriptor[0]) == 0)
-    {
-    }
-    init_movie_frame(0x800CFFC4, descriptor);
-    start_movie((uint8 *)&file.pos, descriptor, func_80031070);
-    prepare_movie_frame(0x800CFFC4, descriptor);
     w_u32(0x800CFC68, 0);
-    held = 1;
-    for (;;)
-    {
-        mode = descriptor[1];
-        selected = r_u32(0x800CFFCC);
-        pixels = r_u32(0x800CFFC4 + (selected << 2));
-        func_80042600(pixels, mode == 1 ? 3 : 2);
-        height = r_s16(0x800CFFF6);
-        selected = r_u32(0x800CFFD8);
-        width = r_s16(0x800CFFF4);
-        adjusted = height - 1;
-        if (adjusted < 0)
-            adjusted = height + 14;
-        groups = (adjusted >> 4) + 1;
-        product = ((uint32)width << 4) * (uint32)groups;
-        pixels = r_u32(0x800CFFD0 + (selected << 2));
-        func_8004267c(pixels, (sint32)product >> 1);
-        prepare_movie_frame(0x800CFFC4, descriptor);
-        func_8003151c(0x800CFFC4);
-        VSync(4);
-        viewport = r_u32(0x800CFFEC);
-        mode = descriptor[1];
-        if (mode == 1)
-        {
-            SetDefDispEnv(&display, 0, viewport == 0 ? 240 : 0, 480, 240);
-            width = display.disp.w;
-            width = (width * 2) / 3;
-            display.isrgb24 = 1;
-            display.disp.w = (sint16)width;
-        }
-        else
-        {
-            SetDefDispEnv(&display, 0, viewport == 0 ? 240 : 0, 320, 240);
-            display.isrgb24 = 0;
-        }
-        PutDispEnv(&display);
-        SetDispMask(1);
-        if (r_u32(0x800CFC68) == 1)
-        {
-            result = 1;
-            break;
-        }
-        mode = descriptor[15];
-        if (PadRead(0) & (PADRdown | PADstart))
-        {
-            result = 2;
-            break;
-        }
-        if (mode - 1 < 2)
-        {
-            input = PadRead(1);
-            if ((input & 0x800) != 0)
-            {
-                input = PadRead(1);
-                if ((input & 0x20) != 0)
-                {
-                    result = 2;
-                    break;
-                }
-            }
-            mode = descriptor[15];
-            if (mode == 2)
-            {
-                input = PadRead(1);
-                if ((input & 0x800) != 0)
-                {
-                    input = PadRead(1);
-                    if ((input & 0x100) != 0)
-                    {
-                        w_u32(0x800CF8DC, 100);
-                        result = 2;
-                        break;
-                    }
-                }
-            }
-            continue;
-        }
-        if (mode == 0 && PadRead(1) != 0)
-        {
-            if (held == 0)
-            {
-                result = 2;
-                break;
-            }
-            continue;
-        }
-        held = 0;
-    }
-    func_8006d5cc(1, 0, 0);
-    DecDCToutCallback(0);
-    func_8006bed8();
-    SsSetSerialAttr(0, 0, 0);
-    SsSetSerialVol(0, 0, 0);
-    while (CdControlB(9, 0, 0) == 0)
-    {
-    }
+    result = xport_fmv_play_presented(path, descriptor[5], 0, &presentation);
+    if (input.interrupted)
+        result = 2;
+    w_u32(0x800CFC68, result == 1);
     func_8004df4c(0, 0, 0, 240);
+    if (result < 0)
+        xport_message_error("OverBlood: Movie playback failed", path);
     return result;
 }
 
